@@ -785,7 +785,7 @@ int ast_format_rate(const struct ast_format *format)
 		}
 	}
 	default:
-		rate = 16000;//ast_format_custom_get_rate(format);
+		rate = ast_format_custom_get_rate(format);
 		return (rate > 0) ? rate : 8000;
 	}
 }
@@ -1465,7 +1465,7 @@ int ast_format_custom_get_rate(const struct ast_format *format){
 	
 	if ((wrapper = find_interface(format))) {
 		if (wrapper->interface && wrapper->interface->format_rate) {
-			rate = wrapper->interface->format_rate(&format->fattr);
+			rate = wrapper->interface->format_rate(format);
 		}
 		ao2_ref(wrapper, -1);
 	}

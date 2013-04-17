@@ -221,7 +221,7 @@ struct ast_format_attr_interface {
 	int (* const format_attr_get_val)(const struct ast_format_attr *format_attr, int key, void *val);
 	
 	int (* const format_samples)(const struct ast_frame *f);
-	int (* const format_rate)(const struct ast_frame *f);
+	int (* const format_rate)(const struct ast_format *format);
 	int (* const allowSmoother)(void);
 
 	/*
