@@ -17,6 +17,8 @@
 #ifndef _ASTERISK_ASTOBJ2_H
 #define _ASTERISK_ASTOBJ2_H
 
+#define REF_DEBUG 1
+
 #include "asterisk/compat.h"
 #include "asterisk/lock.h"
 

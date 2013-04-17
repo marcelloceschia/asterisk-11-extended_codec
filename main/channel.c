@@ -925,6 +925,8 @@ struct ast_format *ast_best_codec(struct ast_format_cap *cap, struct ast_format 
 		AST_FORMAT_G729A,
 		/*! Down to G.723.1 which is proprietary but at least designed for voice */
 		AST_FORMAT_G723_1,
+		
+		//TODO how to handle custom formats
 	};
 	char buf[512];
 	int x;

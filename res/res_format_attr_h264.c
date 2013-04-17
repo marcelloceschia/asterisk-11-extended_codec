@@ -270,6 +270,10 @@ static void h264_format_attr_sdp_generate(const struct ast_format_attr *format_a
 			if (!added) {
 				ast_str_append(str, 0, "a=fmtp:%d profile-level-id=%X%X%X", payload, format_attr->format_attr[H264_ATTR_KEY_PROFILE_IDC],
 					       format_attr->format_attr[H264_ATTR_KEY_PROFILE_IOP], format_attr->format_attr[H264_ATTR_KEY_LEVEL]);
+				
+				
+
+				ast_str_append(str, 0, "\r\na=orient:portrait\r\na=rtcp-fb:* nack pli");
 				added = 1;
 			} else {
 				ast_str_append(str, 0, ";profile-level-id=%X%X%X", format_attr->format_attr[H264_ATTR_KEY_PROFILE_IDC],

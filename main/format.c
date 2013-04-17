@@ -172,7 +172,7 @@ static int format_set_helper(struct ast_format *format, va_list ap)
 	struct interface_ao2_wrapper *wrapper;
 
 	if (!(wrapper = find_interface(format))) {
-		ast_log(LOG_WARNING, "Could not find format interface to set.\n");
+		ast_log(LOG_WARNING, "Could not find format interface for %d to set.\n", format->id);
 		return -1;
 	}
 
@@ -729,6 +729,8 @@ const char *ast_codec2str(struct ast_format *format)
 
 int ast_format_rate(const struct ast_format *format)
 {
+	int rate;
+	
 	switch (format->id) {
 	case AST_FORMAT_SLINEAR12:
 		return 12000;
@@ -783,7 +785,8 @@ int ast_format_rate(const struct ast_format *format)
 		}
 	}
 	default:
-		return 8000;
+		rate = 16000;//ast_format_custom_get_rate(format);
+		return (rate > 0) ? rate : 8000;
 	}
 }
 
@@ -1429,5 +1432,92 @@ int ast_format_attr_unreg_interface(const struct ast_format_attr_interface *inte
 	/* This will remove all custom formats previously created for this interface */
 	load_format_config();
 	f_list = ast_format_list_destroy(f_list);
+	return 0;
+}
+
+
+int ast_format_custom_add(struct ast_format_list *newFormat){
+	int res = 0;
+  
+	ast_log(LOG_NOTICE, "Add new Format %s\n", newFormat->name);
+	res = format_list_add_custom(newFormat);
+	build_format_list_array();
+	return res;
+}
+
+int ast_format_custom_get_samples(const struct ast_format *format, const struct ast_frame *f){
+	struct interface_ao2_wrapper *wrapper;
+	int samples = 0;
+	
+	if ((wrapper = find_interface(format))) {
+		if (wrapper->interface && wrapper->interface->format_samples) {
+			samples = wrapper->interface->format_samples(f);
+		}
+		ao2_ref(wrapper, -1);
+	}
+	
+	return samples;
+}
+
+int ast_format_custom_get_rate(const struct ast_format *format){
+	struct interface_ao2_wrapper *wrapper;
+	int rate = -1;
+	
+	if ((wrapper = find_interface(format))) {
+		if (wrapper->interface && wrapper->interface->format_rate) {
+			rate = wrapper->interface->format_rate(&format->fattr);
+		}
+		ao2_ref(wrapper, -1);
+	}
+	
+	return rate;
+}
+int ast_format_allowSmoother(const struct ast_format *format){
+	struct interface_ao2_wrapper *wrapper;
+	int result = 1;
+	
+	if ((wrapper = find_interface(format))) {
+		if (wrapper->interface && wrapper->interface->allowSmoother) {
+			result = wrapper->interface->allowSmoother();
+		}
+		ao2_ref(wrapper, -1);
+	}
+	
+	return result;
+}
+	
+
+int ast_format_custom_register(struct ast_format_attr_interface *newFormatInterface, enum ast_format_type formatType){
+	
+	int x = 1;
+	int i;
+	size_t f_len;
+	const struct ast_format_list *f_list;
+
+	ao2_wrlock(interfaces);
+	
+	/* if this format does not have a format id, get some new */
+	ast_log(LOG_NOTICE, "register new codec with id: %d\n", newFormatInterface->id);
+// 	if(newFormatInterface->id < 1){
+	  
+		ast_log(LOG_NOTICE, "search for new id\n");
+		
+		f_list = ast_format_list_get(&f_len);
+		for (x = 0; x < f_len; x++) {
+			if (AST_FORMAT_GET_TYPE(f_list[x].format.id)  == formatType) {
+				i = f_list[x].format.id;
+			}
+		}
+		f_list = ast_format_list_destroy(f_list);
+
+		
+		newFormatInterface->id = ++i;
+		ast_log(LOG_NOTICE, "found new id %d\n", newFormatInterface->id);
+		
+// 	}
+	ao2_unlock(interfaces);
+
+	ast_format_attr_reg_interface(newFormatInterface);
+
 	return 0;
 }

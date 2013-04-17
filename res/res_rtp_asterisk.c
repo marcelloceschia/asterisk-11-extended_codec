@@ -2607,6 +2607,7 @@ static int ast_rtp_write(struct ast_rtp_instance *instance, struct ast_frame *fr
 	struct ast_sockaddr remote_address = { {0,} };
 	struct ast_format subclass;
 	int codec;
+	int allowSmoother = 1;
 
 	ast_rtp_instance_get_remote_address(instance, &remote_address);
 
@@ -2652,12 +2653,11 @@ static int ast_rtp_write(struct ast_rtp_instance *instance, struct ast_frame *fr
 			rtp->smoother = NULL;
 		}
 	}
-
-	/* If no smoother is present see if we have to set one up */
-	if (!rtp->smoother) {
-		struct ast_format_list fmt = ast_codec_pref_getsize(&ast_rtp_instance_get_codecs(instance)->pref, &subclass);
-
-		switch (subclass.id) {
+	
+	allowSmoother = ast_format_allowSmoother(&subclass);
+	
+	/* disable smoother for frame based formats */
+	switch (subclass.id) {
 		case AST_FORMAT_SPEEX:
 		case AST_FORMAT_SPEEX16:
 		case AST_FORMAT_SPEEX32:
@@ -2667,21 +2667,29 @@ static int ast_rtp_write(struct ast_rtp_instance *instance, struct ast_frame *fr
 		case AST_FORMAT_SIREN7:
 		case AST_FORMAT_SIREN14:
 		case AST_FORMAT_G719:
-			/* these are all frame-based codecs and cannot be safely run through
-			   a smoother */
-			break;
+
+			allowSmoother = 0;
+		break;
 		default:
-			if (fmt.inc_ms) {
-				if (!(rtp->smoother = ast_smoother_new((fmt.cur_ms * fmt.fr_len) / fmt.inc_ms))) {
-					ast_log(LOG_WARNING, "Unable to create smoother: format %s ms: %d len: %d\n", ast_getformatname(&subclass), fmt.cur_ms, ((fmt.cur_ms * fmt.fr_len) / fmt.inc_ms));
-					return -1;
-				}
-				if (fmt.flags) {
-					ast_smoother_set_flags(rtp->smoother, fmt.flags);
-				}
-				ast_debug(1, "Created smoother: format: %s ms: %d len: %d\n", ast_getformatname(&subclass), fmt.cur_ms, ((fmt.cur_ms * fmt.fr_len) / fmt.inc_ms));
+		  break;
+	}
+	
+
+	/* If no smoother is present see if we have to set one up */
+	if (!rtp->smoother && allowSmoother) {
+		struct ast_format_list fmt = ast_codec_pref_getsize(&ast_rtp_instance_get_codecs(instance)->pref, &subclass);
+
+		if (fmt.inc_ms) {
+			if (!(rtp->smoother = ast_smoother_new((fmt.cur_ms * fmt.fr_len) / fmt.inc_ms))) {
+				ast_log(LOG_WARNING, "Unable to create smoother: format %s ms: %d len: %d\n", ast_getformatname(&subclass), fmt.cur_ms, ((fmt.cur_ms * fmt.fr_len) / fmt.inc_ms));
+				return -1;
 			}
+			if (fmt.flags) {
+				ast_smoother_set_flags(rtp->smoother, fmt.flags);
+			}
+			ast_debug(1, "Created smoother: format: %s ms: %d len: %d\n", ast_getformatname(&subclass), fmt.cur_ms, ((fmt.cur_ms * fmt.fr_len) / fmt.inc_ms));
 		}
+		
 	}
 
 	/* Feed audio frames into the actual function that will create a frame and send it */

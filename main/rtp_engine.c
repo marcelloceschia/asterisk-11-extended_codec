@@ -594,6 +594,7 @@ int ast_rtp_codecs_payloads_set_rtpmap_type_rate(struct ast_rtp_codecs *codecs, 
 		 * rates are not compared */
 		if (sample_rate && t->sample_rate &&
 		    (sample_rate != t->sample_rate)) {
+		  ast_log(LOG_WARNING, "sample rate does not match for %s\n", mimesubtype);
 			continue;
 		}
 
@@ -623,7 +624,7 @@ int ast_rtp_codecs_payloads_set_rtpmap_type_rate(struct ast_rtp_codecs *codecs, 
 		break;
 	}
 	ast_rwlock_unlock(&mime_types_lock);
-
+ast_log(LOG_WARNING, "found: %d\n", found);
 	return (found ? 0 : -2);
 }
 
@@ -2332,4 +2333,11 @@ int ast_rtp_engine_init()
 	add_static_payload(121, NULL, AST_RTP_CISCO_DTMF);   /* Must be type 121 */
 
 	return 0;
+}
+
+void ast_add_mime_type(const struct ast_format *format, int rtp_code, char *type, char *subtype, unsigned int sample_rate){
+	return set_next_mime_type(format, rtp_code, type, subtype, sample_rate);
+}
+void ast_add_static_payload(int map, const struct ast_format *format, int rtp_code){
+	return add_static_payload(map, format, rtp_code);
 }

@@ -1084,7 +1084,10 @@ int ast_codec_get_samples(struct ast_frame *f)
 		samples = ast_format_rate(&f->subclass.format) / 50;
 		break;
 	default:
-		ast_log(LOG_WARNING, "Unable to calculate samples for format %s\n", ast_getformatname(&f->subclass.format));
+		samples = ast_format_custom_get_samples(&f->subclass.format, f);
+		if(!samples){
+			ast_log(LOG_WARNING, "Unable to calculate samples for format %s\n", ast_getformatname(&f->subclass.format));
+		}
 	}
 	return samples;
 }

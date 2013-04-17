@@ -2108,6 +2108,9 @@ void ast_rtp_dtls_cfg_copy(const struct ast_rtp_dtls_cfg *src_cfg, struct ast_rt
  */
 void ast_rtp_dtls_cfg_free(struct ast_rtp_dtls_cfg *dtls_cfg);
 
+void ast_add_mime_type(const struct ast_format *format, int rtp_code, char *type, char *subtype, unsigned int sample_rate);
+void ast_add_static_payload(int map, const struct ast_format *format, int rtp_code);
+
 #if defined(__cplusplus) || defined(c_plusplus)
 }
 #endif

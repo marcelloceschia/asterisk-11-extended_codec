@@ -219,6 +219,10 @@ struct ast_format_attr_interface {
 	 * \retval -1 failure, Value was either not found, or not allowed to be accessed.
 	 */
 	int (* const format_attr_get_val)(const struct ast_format_attr *format_attr, int key, void *val);
+	
+	int (* const format_samples)(const struct ast_frame *f);
+	int (* const format_rate)(const struct ast_frame *f);
+	int (* const allowSmoother)(void);
 
 	/*
 	 * \brief Parse SDP attribute information, interpret it, and store it in ast_format_attr structure.
@@ -471,4 +475,11 @@ int ast_format_is_slinear(const struct ast_format *format);
  * \brief Get the best slinear format id for a given sample rate
  */
 enum ast_format_id ast_format_slin_by_rate(unsigned int rate);
+
+int ast_format_custom_add(struct ast_format_list *newFormat);
+int ast_format_custom_get_samples(const struct ast_format *format, const struct ast_frame *f);
+int ast_format_custom_get_rate(const struct ast_format *format);
+int ast_format_custom_requestFormatId(enum ast_format_type);
+int ast_format_custom_register(struct ast_format_attr_interface *newFormat, enum ast_format_type formatType);
+int ast_format_allowSmoother(const struct ast_format *format);
 #endif /* _AST_FORMAT_H */
